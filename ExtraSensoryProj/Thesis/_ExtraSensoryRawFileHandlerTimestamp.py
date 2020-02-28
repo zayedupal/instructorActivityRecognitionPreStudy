@@ -1,4 +1,9 @@
-import pickle
+###############################################################################
+# 1. Make sure of the paths
+# 2. Make sure of the ExtraSensoryLabels in instructorActivityRecognitionPreStudy/ExtraSensoryProj/ExtraSensoryFeaturesLabels
+# 3. Then run
+###############################################################################
+import os
 import mmap
 import time
 from pathlib import Path
@@ -6,27 +11,39 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-# from ComplexActivityRecognition.ExtraSensoryProj import ExtraSensoryFeaturesLabels, ExtraSensoryHelperFunctions
 from instructorActivityRecognitionPreStudy.ExtraSensoryProj import ExtraSensoryFeaturesLabels, ExtraSensoryHelperFunctions
 
 ## Read all csv files inside a folder
 ## Change the folder path here
-rawDataFolder = 'C:/Users/zc01698/Desktop/Dataset/_ExtraSensory/ExtraSensory.raw_measurements.watch_acc/watch_acc/'
+rawDataFolder = 'C:/Users/zc01698/Desktop/Dataset/_ExtraSensory/ExtraSensory.raw_measurements.proc_gyro/proc_gyro/'
 processedFolder='C:/Users/zc01698/Desktop/Dataset/_ExtraSensory/ExtraSensory.per_uuid_features_labels/'
-normalizedDataFolder = 'C:/Users/zc01698/Desktop/Dataset/_ExtraSensory/ExtraSensory.raw_measurements.watch_acc/watch_acc_norm_dropna_stand/'
+normalizedDataFolder = 'C:/Users/zc01698/Desktop/Dataset/_ExtraSensory/ExtraSensory.raw_measurements.proc_gyro/timestamp/gyro_acc_walk_stand_sit_cw_npy_5secperseq/'
 
-# rawDataFolder = 'D:/Upal/Dataset/ExtraSensory.raw_measurements.watch_acc/watch_acc/'
-# normalizedDataFolder = 'D:/Upal/Dataset/ExtraSensory.raw_measurements.watch_acc/watch_acc_norm_dropna/'
-# processedFolder = 'D:/Upal/Dataset/ExtraSensory.per_uuid_features_labels/'
-
+# small test path
+# rawDataFolder = 'C:/Users/zc01698/Desktop/Dataset/_ExtraSensory/ExtraSensory.raw_measurements.watch_acc/watch_acc/'
+# normalizedDataFolder = 'instructorActivityRecognitionPreStudy/ExtraSensoryProj/Thesis/normRawAcc/'
+# processedFolder = 'instructorActivityRecognitionPreStudy/ExtraSensoryProj/ExtraSensoryData/'
+OVERWRITE = False
 # processedFolder='D:/Upal/Repositories/ComplexActivityRecognition/ExtraSensoryProj/ExtraSensoryData/'
 
-SEQ_LEN = 25
-user_threshold = 50
-# user_threshold = 2
+# 25hz freq. 1 sec means 25 rows
+SEQ_LEN = 200
 csv_df_panda = pd.DataFrame()
 
 user_count = 0
+
+
+def writeToNPY(features, folder, userId, timestamp):
+    if features.shape[0] > 0:
+        # print(all_acc_features.shape)
+        # all_acc_features, scaler = ExtraSensoryHelperFunctions.NormalizeFeatures(all_acc_features)
+        if not os.path.isdir(folder+'/'+userId):
+            os.mkdir(folder+'/'+userId)
+        np_features = np.asarray(features)
+        # print('saving: ',folder+userId +'/' + str(timestamp) + ".npy")
+        np.save(folder+userId +'/' + str(timestamp) + ".npy", np_features)
+    pass
+
 
 def FeatureFileHandlingFunc(path):
     print('preprocessed: ', path)
@@ -50,7 +67,7 @@ def FeatureFileHandlingFunc(path):
     # sequences = []
     # sequences_labels = []
     label_count = len(ExtraSensoryFeaturesLabels.labels)
-    all_acc_features = np.empty((0, 4), dtype=float)
+    all_acc_features = np.empty((0, label_count), dtype=float)
     count = 0
     for index, pre_df_row in pre_df_panda.iterrows():
         # # replace unknown labels or NaNs by 0
@@ -69,11 +86,16 @@ def FeatureFileHandlingFunc(path):
 
         label = np.array(labels_df)
         label_int = ExtraSensoryHelperFunctions.BitArrayToInt(label)
-        # print('label arr: ',label)
-        # print('label int: ',label_int)
-        # get the file path
+
         curDatFilePath = ExtraSensoryHelperFunctions.findRawDataFile(rawDataFolder, user_id,
                                                                      int(pre_df_row['timestamp']))
+        # logic for file overwrite
+        if not OVERWRITE:
+            # print("path:", normalizedDataFolder+user_id +'/' + str(pre_df_row['timestamp']) + ".npy")
+            if os.path.exists(normalizedDataFolder+user_id +'/' + str(int(pre_df_row['timestamp'])) + ".npy"):
+                # print("I EXIST")
+                continue
+
         if curDatFilePath is not None:
             lines = []
             with open(curDatFilePath,'r+b') as curDatFile:
@@ -99,19 +121,7 @@ def FeatureFileHandlingFunc(path):
 
             label_rows = np.full((acc_features.shape[0], 1), label_int, dtype=float)
             acc_features = np.append(acc_features, label_rows, axis=1)
-            # print(all_acc_features.shape)
-            all_acc_features = np.append(all_acc_features,acc_features,axis=0)
-
-    # user_count += 1
-    # print('user_count: ', user_count)
-
-    if all_acc_features.shape[0] > 0:
-        # print(all_acc_features.shape)
-        # all_acc_features, scaler = ExtraSensoryHelperFunctions.NormalizeFeatures(all_acc_features)
-        all_acc_features = np.asarray(all_acc_features)
-        np.save(normalizedDataFolder + user_id + ".npy", all_acc_features)
-        # with open(normalizedDataFolder + user_id + ".npy",'wb') as f:
-        #     pickle.dump(all_acc_features,f)
+            writeToNPY(acc_features,normalizedDataFolder,user_id,int(pre_df_row['timestamp']))
 
 
 # Go through each of the preprocessed folders and csv files
@@ -125,7 +135,3 @@ pool.join()
 
 elapsed_time = time.time()-start_time
 print("runtime: ",elapsed_time)
-# with open(normalizedDataFolder + '0A986513-7828-4D53-AA1F-E02D6DF9561B' + ".npy", 'rb') as f:
-#     ulala = np.load(f,allow_pickle=True)
-#     print('ulala: ',ulala.shape)
-#     print(ulala[0])

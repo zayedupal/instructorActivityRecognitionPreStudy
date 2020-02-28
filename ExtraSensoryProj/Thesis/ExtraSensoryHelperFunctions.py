@@ -1,21 +1,26 @@
 import os
 import csv
-
-import keras
 # from ComplexActivityRecognition.ExtraSensoryProj import ExtraSensoryFeaturesLabels
-from instructorActivityRecognitionPreStudy.ExtraSensoryProj import ExtraSensoryFeaturesLabels
+
+# import tensorflow
+from tensorflow.keras.models import model_from_json
+# from tensorflow import keras
+import ExtraSensoryFeaturesLabels
 import pandas as pd
 import numpy as np
 from pathlib import Path
 from joblib import dump, load
-from tensorflow import keras
-from tensorflow_core.python.keras.models import model_from_json
-# from tensorflow.keras.models import model_from_json
-
+import keras
+import pickle
 # constants
-# MODEL_PATH = 'ComplexActivityRecognition/ExtraSensoryProj/SavedModels/'
-MODEL_PATH = 'C:/Users/zc01698/Desktop/Dataset/_ExtraSensory/_Models/'
 
+MODEL_PATH = 'C:/Users/zc01698/Desktop/_ExtrasensoryOutput/_runtimeModels/'
+
+
+def save_dict_file(path,texts):
+    result_file = open(path, "wb")
+    pickle.dump(texts, result_file)
+    result_file.close()
 
 def save_model_keras(model,name,path):
     # serialize model to JSON
@@ -34,7 +39,7 @@ def load_model_keras(path,name):
     loaded_model = model_from_json(loaded_model_json)
     # load weights into new model
     loaded_model.load_weights(path+name+'.h5')
-    print("Loaded model and weights from disk")
+    print("Loaded model from disk")
     return loaded_model
 
 def get_actual_date_labels(tick_seconds):
@@ -93,23 +98,27 @@ def BitArrayToInt(arr):
 
 def PlotEpochVsAcc(plt,history):
     # summarize history for accuracy
+    plt.figure()
     plt.plot(history.history['accuracy'])
     plt.plot(history.history['val_accuracy'])
     plt.title('model accuracy')
     plt.ylabel('accuracy')
     plt.xlabel('epoch')
     plt.legend(['train', 'test'], loc='upper left')
-    plt.show()
+    # plt.show()
+    return plt
 
 def PlotEpochVsLoss(plt,history):
     # summarize history for loss
+    plt.figure()
     plt.plot(history.history['loss'])
     plt.plot(history.history['val_loss'])
     plt.title('model loss')
     plt.ylabel('loss')
     plt.xlabel('epoch')
     plt.legend(['train', 'test'], loc='upper left')
-    plt.show()
+    # plt.show()
+    return plt
 
 def ReadCSVToArray(filepath):
     with open(filepath, 'r') as outfile:

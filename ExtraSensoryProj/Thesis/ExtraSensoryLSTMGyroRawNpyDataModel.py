@@ -4,21 +4,28 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from keras import Sequential
-from keras.layers import LSTM, Dense
 from sklearn.metrics import accuracy_score, multilabel_confusion_matrix, f1_score, balanced_accuracy_score, \
     roc_curve, auc, confusion_matrix, precision_score, recall_score
 from sklearn.model_selection import train_test_split
 from tensorflow import keras
+from tensorflow import keras
+# keras may need to be changed with tensorflow.keras
+from keras.callbacks import EarlyStopping
+from keras.models import Sequential
+from keras.layers import LSTM, Dense,Dropout
 
-from instructorActivityRecognitionPreStudy.ExtraSensoryProj import ExtraSensoryFeaturesLabels, ExtraSensoryHelperFunctions
+import ExtraSensoryFeaturesLabels, ExtraSensoryHelperFunctions
 
 ## Read all csv files inside a folder
 ## Change the folder path here
-rawDataFolder = 'C:/Users/zc01698/Desktop/Dataset/_ExtraSensory/ExtraSensory.raw_measurements.watch_acc/watch_acc_normalized/'
+rawDataFolder = 'C:/Users/zc01698/Desktop/Dataset/_ExtraSensory/ExtraSensory.raw_measurements.proc_gyro/no_timestamp/phn_gyro_norm_dropna_5sec/'
 
-SEQ_LEN = 25
-user_threshold = 5
+resultPath = 'C:/Users/zc01698/Desktop/_ExtrasensoryOutput/_runtimeResults/'
+
+EPOCH_NO = 100
+SAVE_MODEL_NAME = 'LSTMGyroRawNpy_L200_D200_SeqLen200'
+SEQ_LEN = 200
+user_threshold =2
 csv_df_panda = pd.DataFrame()
 
 user_count = 0
@@ -69,7 +76,7 @@ for path in Path(rawDataFolder).glob('**/*.npy'):
     print('user_count: ', user_count)
     if user_count >= user_threshold:
         break
-
+print('file_count: ', user_count)
 sequences = np.array(sequences)
 # sequences= sequences.reshape(sequences.shape[0],sequences.shape[1],3)
 sequences_labels = np.array(sequences_labels)
@@ -87,29 +94,30 @@ print('n_classes: ',n_classes)
 
 # divide train and test set
 X_train, X_test, Y_train, Y_test = train_test_split(sequences, sequences_labels,random_state=0, test_size=0.3)
+# print(Y_train)
 positive_counts = dict()
 class_weights = ExtraSensoryHelperFunctions.calculating_class_weights(Y_train)
 # build the model
-# # model 1
-# model = Sequential()
-# model.add(LSTM(200,input_shape=(SEQ_LEN,n_features)))
-# model.add(Dense(200, activation='relu',kernel_initializer='he_uniform'))
-# model.add(Dense(n_classes, activation='sigmoid'))
-## model 2
+# model 1
 model = Sequential()
-model.add(LSTM(500,input_shape=(SEQ_LEN,n_features),return_sequences=True))
-model.add(LSTM(200,return_sequences=True))
-model.add(LSTM(100,return_sequences=True))
-model.add(LSTM(50,return_sequences=True))
-model.add(LSTM(25))
+model.add(LSTM(200,input_shape=(SEQ_LEN,n_features)))
+model.add(Dropout(0.2))
+model.add(Dense(200, activation='relu',kernel_initializer='he_uniform'))
 model.add(Dense(n_classes, activation='sigmoid'))
+## model 2
+# model = Sequential()
+# model.add(LSTM(200,input_shape=(SEQ_LEN,n_features),return_sequences=True))
+# model.add(LSTM(100,return_sequences=True))
+# model.add(LSTM(50,return_sequences=True))
+# model.add(LSTM(25))
+# model.add(Dense(n_classes, activation='sigmoid'))
 
 # model.save(ExtraSensoryHelperFunctions.MODEL_PATH+'LSTM2')
 METRICS = [
-      # keras.metrics.TruePositives(name='tp'),
-      # keras.metrics.FalsePositives(name='fp'),
-      # keras.metrics.TrueNegatives(name='tn'),
-      # keras.metrics.FalseNegatives(name='fn'),
+      # tensorflow.keras.metrics.TruePositives(name='tp'),
+      # tensorflow.keras.metrics.FalsePositives(name='fp'),
+      # tensorflow.keras.metrics.TrueNegatives(name='tn'),
+      # tensorflow.keras.metrics.FalseNegatives(name='fn'),
       keras.metrics.BinaryAccuracy(name='accuracy'),
       keras.metrics.Precision(name='precision'),
       keras.metrics.Recall(name='recall'),
@@ -121,8 +129,8 @@ METRICS = [
 # multi-label classification, but keep in mind that the goal here
 # is to treat each output label as an independent Bernoulli
 # distribution
-model.compile(loss='binary_crossentropy', optimizer='adam', metrics=METRICS)
-# model.compile(loss=ExtraSensoryHelperFunctions.get_weighted_loss(class_weights), optimizer='adam', metrics=METRICS)
+# model.compile(loss='binary_crossentropy', optimizer='adam', metrics=METRICS)
+model.compile(loss=ExtraSensoryHelperFunctions.get_weighted_loss(class_weights), optimizer='adam', metrics=METRICS)
 
 # #Checkpoint
 # checkpoint_path = "D:/Upal/Repositories/ComplexActivityRecognition/ExtraSensoryProj/Checkpoints/cp2.ckpt"
@@ -135,10 +143,17 @@ model.compile(loss='binary_crossentropy', optimizer='adam', metrics=METRICS)
 ## Fit model for multiple labels and print accuracy
 ## 2296*1130 = 2594485-5
 # history= model.fit(X_train, Y_train, validation_split=0.3,batch_size=10000, epochs=50,callbacks=[cp_callback])
-history= model.fit(X_train, Y_train, validation_split=0.3,batch_size=10000, epochs=50,verbose=2)
+history= model.fit(X_train, Y_train, validation_split=0.3,
+                   batch_size=10000, epochs=EPOCH_NO,verbose=2,shuffle=False,
+                   callbacks=[EarlyStopping(monitor='val_loss', patience=5)])
 
+# save model to file
+ExtraSensoryHelperFunctions.save_model_keras(model,SAVE_MODEL_NAME,ExtraSensoryHelperFunctions.MODEL_PATH)
+
+# predict
 pred = model.predict(X_test,verbose=1)
 pred_proba = model.predict_proba(X_test)
+
 pred[pred>=0.5]=1
 pred[pred<0.5]=0
 # print('pred: ', pred)
@@ -149,10 +164,12 @@ conf_mat = multilabel_confusion_matrix(Y_test,pred)
 # print(conf_mat)
 
 # summarize history for accuracy
-ExtraSensoryHelperFunctions.PlotEpochVsAcc(plt,history)
+plt = ExtraSensoryHelperFunctions.PlotEpochVsAcc(plt,history)
+plt.savefig(resultPath+SAVE_MODEL_NAME+'_Acc.png')
 
 # summarize history for loss
-ExtraSensoryHelperFunctions.PlotEpochVsLoss(plt,history)
+plt = ExtraSensoryHelperFunctions.PlotEpochVsLoss(plt,history)
+plt.savefig(resultPath+SAVE_MODEL_NAME+'_Loss.png')
 
 # Compute ROC curve and ROC area for each class
 fpr = dict()
@@ -160,6 +177,8 @@ tpr = dict()
 roc_auc = dict()
 thresholds = dict()
 conf_mat = dict()
+metrics_texts = dict()
+
 for i in range(0,n_classes):
     fpr[i], tpr[i], thresholds[i] = roc_curve(Y_test[:, i], pred_proba[:, i])
     roc_auc[i] = auc(fpr[i], tpr[i])
@@ -175,6 +194,10 @@ for i in range(0,n_classes):
     metrics_text += f'confusion matrix: \n {conf_mat[i]}'
     metrics_text += '\n'
     print(metrics_text)
+    metrics_texts[i] = metrics_text
+
+# write result to file
+ExtraSensoryHelperFunctions.save_dict_file(resultPath+SAVE_MODEL_NAME+'_results.txt',metrics_texts)
 
 # Compute micro-average ROC curve and ROC area
 fpr["micro"], tpr["micro"], _ = roc_curve(Y_test.ravel(), pred_proba.ravel())
@@ -196,7 +219,7 @@ tpr["macro"] = mean_tpr
 roc_auc["macro"] = auc(fpr["macro"], tpr["macro"])
 
 # Plot all ROC curves
-plt.figure()
+plt.figure(figsize=(12,9))
 plt.plot(fpr["micro"], tpr["micro"],
          label='micro-average ROC curve (area = {0:0.2f})'
                ''.format(roc_auc["micro"]),
@@ -220,4 +243,5 @@ plt.xlabel('False Positive Rate')
 plt.ylabel('True Positive Rate')
 plt.title('Some extension of Receiver operating characteristic to multi-class')
 plt.legend(loc="lower right")
-plt.show()
+# plt.show()
+plt.savefig(resultPath+SAVE_MODEL_NAME+'_ROC.png')

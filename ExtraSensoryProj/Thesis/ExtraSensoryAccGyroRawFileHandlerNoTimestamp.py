@@ -11,9 +11,10 @@ from instructorActivityRecognitionPreStudy.ExtraSensoryProj import ExtraSensoryF
 
 ## Read all csv files inside a folder
 ## Change the folder path here
-rawDataFolder = 'C:/Users/zc01698/Desktop/Dataset/_ExtraSensory/ExtraSensory.raw_measurements.watch_acc/watch_acc/'
+
+rawDataFolder = 'C:/Users/zc01698/Desktop/Dataset/_ExtraSensory/ExtraSensory.raw_measurements.proc_gyro/proc_gyro/'
 processedFolder='C:/Users/zc01698/Desktop/Dataset/_ExtraSensory/ExtraSensory.per_uuid_features_labels/'
-normalizedDataFolder = 'C:/Users/zc01698/Desktop/Dataset/_ExtraSensory/ExtraSensory.raw_measurements.watch_acc/watch_acc_norm_dropna_stand/'
+normalizedDataFolder = 'C:/Users/zc01698/Desktop/Dataset/_ExtraSensory/ExtraSensory.raw_measurements.proc_gyro/no_timestamp/phn_gyro_norm_dropna_1sec/'
 
 # rawDataFolder = 'D:/Upal/Dataset/ExtraSensory.raw_measurements.watch_acc/watch_acc/'
 # normalizedDataFolder = 'D:/Upal/Dataset/ExtraSensory.raw_measurements.watch_acc/watch_acc_norm_dropna/'
@@ -21,8 +22,8 @@ normalizedDataFolder = 'C:/Users/zc01698/Desktop/Dataset/_ExtraSensory/ExtraSens
 
 # processedFolder='D:/Upal/Repositories/ComplexActivityRecognition/ExtraSensoryProj/ExtraSensoryData/'
 
-SEQ_LEN = 25
-user_threshold = 50
+SEQ_LEN = 40
+user_threshold = 2
 # user_threshold = 2
 csv_df_panda = pd.DataFrame()
 

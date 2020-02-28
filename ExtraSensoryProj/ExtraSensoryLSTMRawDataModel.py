@@ -10,7 +10,7 @@ from sklearn.model_selection import train_test_split
 
 from tensorflow import keras
 
-from ExtraSensoryProj import ExtraSensoryFeaturesLabels, ExtraSensoryHelperFunctions
+from instructorActivityRecognitionPreStudy.ExtraSensoryProj import ExtraSensoryFeaturesLabels, ExtraSensoryHelperFunctions
 # import glob
 from pathlib import Path
 import matplotlib.pyplot as plt
@@ -53,6 +53,7 @@ for path in Path(processedFolder).glob('**/*.csv'):
         curDatFilePath = ExtraSensoryHelperFunctions.findRawDataFile(rawDataFolder,user_id,int(pre_df_row['timestamp']))
         # replace unknown labels or NaNs by 0
         labels_df = pre_df_row[ExtraSensoryFeaturesLabels.labels].fillna(0)
+
         label = np.array(labels_df)
         if curDatFilePath is not None:
             curDatFile = open(curDatFilePath)
