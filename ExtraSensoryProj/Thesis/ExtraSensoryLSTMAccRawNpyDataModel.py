@@ -23,7 +23,7 @@ resultPath = 'C:/Users/zc01698/Desktop/_ExtrasensoryOutput/_runtimeResults/'
 
 EPOCH_NO = 100
 SAVE_MODEL_NAME = 'LSTMAccRawNpy_L200_D200_SeqLen125'
-SEQ_LEN = 25
+SEQ_LEN = 125
 user_threshold =60
 csv_df_panda = pd.DataFrame()
 
@@ -53,9 +53,9 @@ for path in Path(rawDataFolder).glob('**/*.npy'):
     np_labels_int = np.array(np_feature_lable[:,3:])
 
     np_labels_bin = np.array(list(map(lambda x:ExtraSensoryHelperFunctions.IntToBinArr(x),np_labels_int)))
-    print('np_labels_bin shape: ',np_labels_bin.shape)
-    print('np_labels_int: ', np_labels_int[0])
-    print('np_labels_bin[0]: ', np_labels_bin[0])
+    # print('np_labels_bin shape: ',np_labels_bin.shape)
+    # print('np_labels_int: ', np_labels_int[0])
+    # print('np_labels_bin[0]: ', np_labels_bin[0])
 
 
     # create sequences with seq length
@@ -75,7 +75,7 @@ for path in Path(rawDataFolder).glob('**/*.npy'):
     print('user_count: ', user_count)
     if user_count >= user_threshold:
         break
-print('file_count: ', user_count)
+# print('file_count: ', user_count)
 sequences = np.array(sequences)
 # sequences= sequences.reshape(sequences.shape[0],sequences.shape[1],3)
 sequences_labels = np.array(sequences_labels)
