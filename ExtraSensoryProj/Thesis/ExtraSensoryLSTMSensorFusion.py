@@ -7,25 +7,25 @@ import matplotlib.pyplot as plt
 from sklearn.metrics import accuracy_score, multilabel_confusion_matrix, f1_score, balanced_accuracy_score, \
     roc_curve, auc, confusion_matrix, precision_score, recall_score
 
-import ExtraSensoryHelperFunctions, ExtraSensoryFeaturesLabels
+from upal import ExtraSensoryHelperFunctions, ExtraSensoryFeaturesLabels
 
 #timstamped user data folders
 timeStampedDataFolderAcc = '/home/rana/Software&Data/Data/Upal/timestamped/watch_acc_walk_stand_sit_cw_npy_5secperseq/'
 timeStampedDataFolderGyro = '/home/rana/Software&Data/Data/Upal/timestamped/gyro_acc_walk_stand_sit_cw_npy_5secperseq/'
 
-resultPath = '/home/rana/Thesis/DrQA/upal/_Results/'
+resultPath = '/home/rana/Thesis/DrQA/upal/_Results/LSTM/'
 
 USER_THRESH = 15
 SEQ_LEN_ACC = 125
 SEQ_LEN_GYRO = 200
-ACC_MODEL_PATH = 'C:/Users/zc01698/Desktop/_ExtrasensoryOutput/LSTM_RAW/Watch_Acc_125seq/Models/'
-ACC_MODEL_NAME = 'LSTMAccRawNpy_L200_D200_SeqLen125_100epoch'
-GYRO_MODEL_PATH = 'C:/Users/zc01698/Desktop/_ExtrasensoryOutput/LSTM_RAW/Phn_Gyro_200seq/Models/'
-GYRO_MODEL_NAME = 'LSTMGyroRawNpy_L200_D200_SeqLen200_100epoch'
+ACC_MODEL_PATH = '/home/rana/Thesis/DrQA/upal/_Models/'
+ACC_MODEL_NAME = 'LSTMAccRawNpy_L200_D200_SeqLen125'
+GYRO_MODEL_PATH = '/home/rana/Thesis/DrQA/upal/_Models/'
+GYRO_MODEL_NAME = 'LSTMGyroRawNpy_L200_D200_SeqLen200'
 
 # WEIGHTS ARE CURRENTLY GIVEN BY PRECISION
-ACC_FUSION_WEIGHTS = np.array([0.71,0.20,0.27,0.25])
-GYRO_FUSION_WEIGHTS = np.array([0.49,0.25,0.18,0.28])
+ACC_FUSION_WEIGHTS = np.array([0.70,0.19,0.26,0.25])
+GYRO_FUSION_WEIGHTS = np.array([0.58,0.24,0.18,0.25])
 fused_weight_sum = ACC_FUSION_WEIGHTS+GYRO_FUSION_WEIGHTS
 print("fused_weight_sum: ", fused_weight_sum)
 

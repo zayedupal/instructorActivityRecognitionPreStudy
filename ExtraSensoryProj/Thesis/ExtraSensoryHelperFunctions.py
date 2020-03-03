@@ -5,7 +5,7 @@ import csv
 # import tensorflow
 from tensorflow.keras.models import model_from_json
 # from tensorflow import keras
-import ExtraSensoryFeaturesLabels
+from upal import ExtraSensoryFeaturesLabels
 import pandas as pd
 import numpy as np
 from pathlib import Path
@@ -13,9 +13,12 @@ from joblib import dump, load
 import keras
 import pickle
 # constants
+# MODEL_PATH = 'ComplexActivityRecognition/ExtraSensoryProj/SavedModels/'
+MODEL_PATH = '/home/rana/Thesis/DrQA/upal/_Models/'
 
-MODEL_PATH = 'C:/Users/zc01698/Desktop/_ExtrasensoryOutput/_runtimeModels/'
-
+def create_folder(path):
+    if not os.path.exists(path):
+        os.makedirs(path)
 
 def save_dict_file(path,texts):
     result_file = open(path, "wb")

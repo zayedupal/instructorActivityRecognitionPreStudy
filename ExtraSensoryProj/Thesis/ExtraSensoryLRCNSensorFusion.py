@@ -7,13 +7,13 @@ import matplotlib.pyplot as plt
 from sklearn.metrics import accuracy_score, multilabel_confusion_matrix, f1_score, balanced_accuracy_score, \
     roc_curve, auc, confusion_matrix, precision_score, recall_score
 
-import ExtraSensoryHelperFunctions, ExtraSensoryFeaturesLabels
+from upal import ExtraSensoryHelperFunctions, ExtraSensoryFeaturesLabels
 
 #timstamped user data folders
 timeStampedDataFolderAcc = '/home/rana/Software&Data/Data/Upal/timestamped/watch_acc_walk_stand_sit_cw_npy_5secperseq/'
 timeStampedDataFolderGyro = '/home/rana/Software&Data/Data/Upal/timestamped/gyro_acc_walk_stand_sit_cw_npy_5secperseq/'
 
-resultPath = '/home/rana/Thesis/DrQA/upal/_Results/'
+resultPath = '/home/rana/Thesis/DrQA/upal/_Results/LRCN/'
 
 USER_THRESH = 15
 SEQ_LEN_ACC = 125
@@ -24,8 +24,8 @@ GYRO_MODEL_PATH = '/home/rana/Thesis/DrQA/upal/_Models/'
 GYRO_MODEL_NAME = 'LRCNGyroRawNpy_Conv5_25_5_L200_D200'
 
 # WEIGHTS ARE CURRENTLY GIVEN BY PRECISION
-ACC_FUSION_WEIGHTS = np.array([0.68,0.25,0.23,0.25])
-GYRO_FUSION_WEIGHTS = np.array([0.62,0.25,0.21,0.24])
+ACC_FUSION_WEIGHTS = np.array([0.70,0.25,0.26,0.28])
+GYRO_FUSION_WEIGHTS = np.array([0.59,0.25,0.20,0.25])
 fused_weight_sum = ACC_FUSION_WEIGHTS+GYRO_FUSION_WEIGHTS
 print("fused_weight_sum: ", fused_weight_sum)
 
