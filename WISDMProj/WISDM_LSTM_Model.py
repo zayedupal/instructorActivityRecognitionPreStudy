@@ -18,9 +18,14 @@ from tensorflow.keras.layers import LSTM, Dense,Dropout
 # Constants and variables
 #################################################################################################################
 ACTIVITIES = ['A','D','E','F','Q']
-INT_ACTIVITIES = [0,1,2,3,4,5,0]
-ACCEL_DATA_PATH = 'C:/Users/zc01698/Desktop/Dataset/_wisdm-dataset/raw/watch/mixed_test/acc/'
-GYRO_DATA_PATH = 'C:/Users/zc01698/Desktop/Dataset/_wisdm-dataset/raw/watch/mixed_test/gyro/'
+
+# # test
+# ACCEL_DATA_PATH = '/home/rana/Software&Data/Data/Upal/wisdm-dataset/raw/watch/mixed_test/acc/'
+# GYRO_DATA_PATH = '/home/rana/Software&Data/Data/Upal/wisdm-dataset/raw/watch/mixed_test/gyro/'
+
+# actual
+ACCEL_DATA_PATH = '/home/rana/Software&Data/Data/Upal/wisdm-dataset/raw/watch/accel/'
+GYRO_DATA_PATH = '/home/rana/Software&Data/Data/Upal/wisdm-dataset/raw/watch/gyro/'
 
 resultPath = '/home/rana/Thesis/DrQA/upal/_Results/WISDM/LSTM/Acc/'
 
@@ -29,8 +34,8 @@ SAVE_MODEL_NAME = 'WISDM_LSTM_L200_D200'
 SEQ_LEN = 100
 
 # Hyperparameters
-BATCH_SIZE = 1000
-EPOCH_COUNT = 3
+BATCH_SIZE = 10000
+EPOCH_COUNT = 100
 
 #################################################################################################################
 # Preprocessing
@@ -41,7 +46,7 @@ one_hot_encoder = sklearn.preprocessing.OneHotEncoder(sparse=False)
 Xs,ys = WISDM_Helper.handle_raw_files(acc_folder_path=ACCEL_DATA_PATH,gyro_folder_path=GYRO_DATA_PATH,
                                         ACTIVITIES=ACTIVITIES, one_hot_encoder=one_hot_encoder,seq_len=100)
 
-print(ys)
+# print(ys)
 
 #################################################################################################################
 # Train and validation set division

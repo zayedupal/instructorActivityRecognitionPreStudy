@@ -5,6 +5,19 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 import os
+import pickle
+
+#################################################################################################################
+# Other helpers
+#################################################################################################################
+def create_folder(path):
+    if not os.path.exists(path):
+        os.makedirs(path)
+
+def save_dict_file(path,texts):
+    result_file = open(path, "wb")
+    pickle.dump(texts, result_file)
+    result_file.close()
 
 #################################################################################################################
 # Data wrangling
@@ -43,8 +56,6 @@ def handle_raw_files(acc_folder_path,gyro_folder_path,ACTIVITIES, one_hot_encode
     activity_data_dict = dict()
 
     for acc_f,gyro_f in zip(acc_file_array,gyro_file_array):
-        # print(acc_f)
-        # print(gyro_f)
         acc_df = pd.read_csv(acc_f,index_col=2,header=None)
         acc_df.columns=['user','activity','acc_x','acc_y','acc_z']
         acc_df['acc_z']=acc_df['acc_z'].astype(str).str[:-1].astype(np.float)
@@ -66,9 +77,11 @@ def handle_raw_files(acc_folder_path,gyro_folder_path,ACTIVITIES, one_hot_encode
 
         one_hot_encoder.fit(np.array(ACTIVITIES).reshape(-1,1))
 
+        print('Creaating sequence for user ',merged_df.head(1)['user'].values[0])
+
         # for each activity of current user create data list and sequence
         for act in ACTIVITIES:
-            print('Creaating sequence for user ',merged_df.head(1)['user'].values[0], 'activity ',act)
+            # print('Creaating sequence for user ',merged_df.head(1)['user'].values[0], 'activity ',act)
             activity_data_dict[act] = merged_df[merged_df['activity']==act].drop(merged_df.columns[[1, 2]], axis=1)
             # print('data of cur act: ',activity_data_dict[act])
             # one hot encode
@@ -82,13 +95,6 @@ def handle_raw_files(acc_folder_path,gyro_folder_path,ACTIVITIES, one_hot_encode
 
     return sequences, sequences_labels
 
-
-#################################################################################################################
-# Other helpers
-#################################################################################################################
-def create_folder(path):
-    if not os.path.exists(path):
-        os.makedirs(path)
 
 #################################################################################################################
 # Plots
