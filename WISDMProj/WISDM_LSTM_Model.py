@@ -12,22 +12,22 @@ from sklearn.model_selection import train_test_split
 from tensorflow import keras
 from tensorflow.keras.callbacks import EarlyStopping
 from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import LSTM, Dense,Dropout
+from tensorflow.keras.layers import LSTM, Dense,Dropout,LeakyReLU,BatchNormalization
 
 #################################################################################################################
 # Constants and variables
 #################################################################################################################
 ACTIVITIES = ['A','D','E','F','Q']
 
-# # test
-# ACCEL_DATA_PATH = '/home/rana/Software&Data/Data/Upal/wisdm-dataset/raw/watch/mixed_test/acc/'
-# GYRO_DATA_PATH = '/home/rana/Software&Data/Data/Upal/wisdm-dataset/raw/watch/mixed_test/gyro/'
-
 # actual
 ACCEL_DATA_PATH = '/home/rana/Software&Data/Data/Upal/wisdm-dataset/raw/watch/accel/'
 GYRO_DATA_PATH = '/home/rana/Software&Data/Data/Upal/wisdm-dataset/raw/watch/gyro/'
 
-resultPath = '/home/rana/Thesis/DrQA/upal/_Results/WISDM/LSTM/Acc/'
+# # test
+# ACCEL_DATA_PATH = '/home/rana/Software&Data/Data/Upal/wisdm-dataset/raw/watch/mixed_test/acc/'
+# GYRO_DATA_PATH = '/home/rana/Software&Data/Data/Upal/wisdm-dataset/raw/watch/mixed_test/gyro/'
+
+resultPath = '/home/rana/Thesis/DrQA/upal/_Results/WISDM/LSTM/'
 
 LOOP_COUNT = 1
 SAVE_MODEL_NAME = 'WISDM_LSTM_L200_D200'
@@ -35,7 +35,7 @@ SEQ_LEN = 100
 
 # Hyperparameters
 BATCH_SIZE = 10000
-EPOCH_COUNT = 100
+EPOCH_COUNT = 200
 
 #################################################################################################################
 # Preprocessing
@@ -60,15 +60,17 @@ X_train, X_test, Y_train, Y_test = train_test_split(Xs, ys,random_state=0, test_
 n_features = len(X_train[0][0])
 n_classes = len(ACTIVITIES)
 
+
 # model 1
 model = Sequential()
-model.add(LSTM(200,input_shape=(SEQ_LEN,n_features)))
-model.add(Dropout(0.2))
-model.add(Dense(200, activation='relu',kernel_initializer='he_uniform'))
+# model.add(BatchNormalization(input_shape=(SEQ_LEN,n_features)))
+model.add(LSTM(200,input_shape=(SEQ_LEN,n_features),return_sequences=False))
+model.add(Dropout(0.5))
+model.add(Dense(200,activation='relu',kernel_initializer='he_uniform'))
 model.add(Dense(len(ACTIVITIES), activation='softmax'))
 
 METRICS = [
-      keras.metrics.BinaryAccuracy(name='accuracy'),
+      'acc',
       keras.metrics.Precision(name='precision'),
       keras.metrics.Recall(name='recall'),
       keras.metrics.AUC(name='auc'),
@@ -94,25 +96,32 @@ for lc in range(0,LOOP_COUNT):
     WISDM_Helper.create_folder(cur_result_path)
 
     history= model.fit(
-        X_train, Y_train, validation_split=0.3,
+        X_train, Y_train, validation_split=0.2,
         batch_size=BATCH_SIZE, epochs=EPOCH_COUNT,verbose=2,shuffle = False,
-        callbacks=[EarlyStopping(monitor='val_loss', patience=5)])
+        callbacks=[EarlyStopping(monitor='val_loss', patience=3)]
+    )
 
     # # save model to file
     # WISDM_Helper.save_model_keras(model,SAVE_MODEL_NAME,ExtraSensoryHelperFunctions.MODEL_PATH)
 
     # predict
-    pred = model.predict(X_test,verbose=1)
-    pred_proba = model.predict_proba(X_test)
+    pred_proba = model.predict(X_test,verbose=1)
+    pred = pred_proba
+    print('pred_proba: ', pred_proba)
+    pred_max = np.argmax(np.array(pred_proba),axis=1)
 
-    print(pred)
-    print(pred_proba)
-    pred[pred>=0.5]=1
-    pred[pred<0.5]=0
-    # print('pred: ', pred)
-    # print('Y_test: ', Y_test)
+    unique,count = np.unique(pred_max, return_counts=True)
+    print(unique,count)
+    y_max = np.argmax(np.array(Y_test),axis=1)
+    unique,count = np.unique(y_max, return_counts=True)
+    print(unique,count)
+
+    pred = (pred_proba == pred_proba.max(axis=1)[:,None]).astype(int)
+    print('pred: ', pred)
+    print('Y_test: ', Y_test)
 
     conf_mat = multilabel_confusion_matrix(Y_test,pred)
+    # conf_mat = confusion_matrix(Y_test,pred)
     print('conf mat: ')
     print(conf_mat)
 
@@ -219,5 +228,5 @@ for lc in range(0,LOOP_COUNT):
     plt.ylabel('True Positive Rate')
     plt.title('Some extension of Receiver operating characteristic to multi-class')
     plt.legend(loc="lower right")
-    plt.show()
+    # plt.show()
     plt.savefig(cur_result_path + SAVE_MODEL_NAME + '_ROC.png')

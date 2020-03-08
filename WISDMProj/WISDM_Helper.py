@@ -6,6 +6,7 @@ import numpy as np
 import pandas as pd
 import os
 import pickle
+import tensorflow.keras.backend as K
 
 #################################################################################################################
 # Other helpers
@@ -34,7 +35,7 @@ def concat_np_array(parent,child):
 
 def create_sequence(df,label,time_steps):
     Xs, ys = [], []
-    for i in range(df.shape[0] - time_steps):
+    for i in range(0,(df.shape[0] - time_steps),int(time_steps/10)):
         v = df.iloc[i:(i + time_steps)].values
         Xs.append(v)
         ys.append(label)
@@ -82,13 +83,15 @@ def handle_raw_files(acc_folder_path,gyro_folder_path,ACTIVITIES, one_hot_encode
         # for each activity of current user create data list and sequence
         for act in ACTIVITIES:
             # print('Creaating sequence for user ',merged_df.head(1)['user'].values[0], 'activity ',act)
-            activity_data_dict[act] = merged_df[merged_df['activity']==act].drop(merged_df.columns[[1, 2]], axis=1)
+            activity_data_dict[act] = merged_df[merged_df['activity']==act].drop(merged_df.columns[[0,1]], axis=1)
             # print('data of cur act: ',activity_data_dict[act])
             # one hot encode
             one_hot_encoded = one_hot_encoder.transform(np.array(act).reshape(-1,1))
             Xs, ys = create_sequence(activity_data_dict[act],one_hot_encoded.flatten(),seq_len)
-            sequences = concat_np_array(sequences,Xs)
-            sequences_labels = concat_np_array(sequences_labels, ys)
+            # print('sequences dim, Xs dim', sequences.shape, Xs.shape)
+            if Xs.shape[0] > 0:
+                sequences = concat_np_array(sequences,Xs)
+                sequences_labels = concat_np_array(sequences_labels, ys)
 
     print('total len of seq: ',len(sequences))
     print('total len of seq labels: ',len(sequences_labels))
@@ -102,8 +105,8 @@ def handle_raw_files(acc_folder_path,gyro_folder_path,ACTIVITIES, one_hot_encode
 def PlotEpochVsAcc(plt,history):
     # summarize history for accuracy
     plt.figure()
-    plt.plot(history.history['accuracy'])
-    plt.plot(history.history['val_accuracy'])
+    plt.plot(history.history['acc'])
+    plt.plot(history.history['val_acc'])
     plt.title('model accuracy')
     plt.ylabel('accuracy')
     plt.xlabel('epoch')
