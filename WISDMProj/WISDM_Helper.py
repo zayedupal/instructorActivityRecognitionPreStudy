@@ -6,7 +6,9 @@ import numpy as np
 import pandas as pd
 import os
 import pickle
-import tensorflow.keras.backend as K
+from tensorflow.keras.models import model_from_json
+
+MODEL_PATH = '/home/rana/Thesis/DrQA/upal/_Models/'
 
 #################################################################################################################
 # Other helpers
@@ -19,6 +21,26 @@ def save_dict_file(path,texts):
     result_file = open(path, "wb")
     pickle.dump(texts, result_file)
     result_file.close()
+
+def save_model_keras(model,name,path):
+    # serialize model to JSON
+    model_json = model.to_json()
+    with open(path+name+'.json', "w") as json_file:
+        json_file.write(model_json)
+    # serialize weights to HDF5
+    model.save_weights(path+name+'.h5')
+    print("Saved model to: ", path)
+
+def load_model_keras(path,name):
+    # load json and create model
+    json_file = open(path+name+'.json', 'r')
+    loaded_model_json = json_file.read()
+    json_file.close()
+    loaded_model = model_from_json(loaded_model_json)
+    # load weights into new model
+    loaded_model.load_weights(path+name+'.h5')
+    print("Loaded model from disk")
+    return loaded_model
 
 #################################################################################################################
 # Data wrangling
@@ -46,15 +68,13 @@ def handle_raw_files(acc_folder_path,gyro_folder_path,ACTIVITIES, one_hot_encode
     sequences = np.empty(0)
     sequences_labels = np.empty(0)
 
-    start_time = time.time()
-
     # sorted file list, so we can get same user's file for both acc and gyro
     acc_file_array = sorted(Path(acc_folder_path).glob('**/*.txt'))
     gyro_file_array = sorted(Path(gyro_folder_path).glob('**/*.txt'))
 
 
-    files = []
     activity_data_dict = dict()
+    total_rows = 0
 
     for acc_f,gyro_f in zip(acc_file_array,gyro_file_array):
         acc_df = pd.read_csv(acc_f,index_col=2,header=None)
@@ -79,6 +99,7 @@ def handle_raw_files(acc_folder_path,gyro_folder_path,ACTIVITIES, one_hot_encode
         one_hot_encoder.fit(np.array(ACTIVITIES).reshape(-1,1))
 
         print('Creaating sequence for user ',merged_df.head(1)['user'].values[0])
+        total_rows += merged_df.shape[0]
 
         # for each activity of current user create data list and sequence
         for act in ACTIVITIES:
@@ -96,7 +117,7 @@ def handle_raw_files(acc_folder_path,gyro_folder_path,ACTIVITIES, one_hot_encode
     print('total len of seq: ',len(sequences))
     print('total len of seq labels: ',len(sequences_labels))
 
-    return sequences, sequences_labels
+    return sequences, sequences_labels,total_rows
 
 
 #################################################################################################################

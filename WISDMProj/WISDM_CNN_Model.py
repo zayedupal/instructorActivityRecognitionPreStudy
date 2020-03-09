@@ -12,7 +12,7 @@ from sklearn.model_selection import train_test_split
 from tensorflow import keras
 from tensorflow.keras.callbacks import EarlyStopping
 from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import LSTM, Dense,Dropout
+from tensorflow.keras.layers import LSTM, Dense,Dropout,TimeDistributed,Conv1D,MaxPooling1D,Flatten
 
 #################################################################################################################
 # Constants and variables
@@ -27,10 +27,10 @@ GYRO_DATA_PATH = '/home/rana/Software&Data/Data/Upal/wisdm-dataset/raw/watch/gyr
 # ACCEL_DATA_PATH = '/home/rana/Software&Data/Data/Upal/wisdm-dataset/raw/watch/mixed_test/acc/'
 # GYRO_DATA_PATH = '/home/rana/Software&Data/Data/Upal/wisdm-dataset/raw/watch/mixed_test/gyro/'
 
-resultPath = '/home/rana/Thesis/DrQA/upal/_Results/WISDM/LSTM/'
+resultPath = '/home/rana/Thesis/DrQA/upal/_Results/WISDM/CNN/'
 
 LOOP_COUNT = 3
-SAVE_MODEL_NAME = 'WISDM_LSTM_L200_D200'
+SAVE_MODEL_NAME = 'WISDM_CNN_Conv2_10_5_L200_D200'
 SEQ_LEN = 100
 
 # Hyperparameters
@@ -63,11 +63,16 @@ n_classes = len(ACTIVITIES)
 for lc in range(0,LOOP_COUNT):
     # model 1
     model = Sequential()
-    # model.add(BatchNormalization(input_shape=(SEQ_LEN,n_features)))
-    model.add(LSTM(200,input_shape=(SEQ_LEN,n_features),return_sequences=False))
+    model.add(Conv1D(filters=10, kernel_size=25, activation='relu',input_shape=(SEQ_LEN, n_features)))
+    model.add(MaxPooling1D())
+    model.add(Dropout(0.2))
+    model.add(Conv1D(filters=10, kernel_size=25, activation='relu'))
+    model.add(MaxPooling1D())
+
     model.add(Dropout(0.5))
-    model.add(Dense(200,activation='relu',kernel_initializer='he_uniform'))
-    model.add(Dense(len(ACTIVITIES), activation='softmax'))
+    model.add(Flatten())
+    model.add(Dense(200, activation='relu'))
+    model.add(Dense(n_classes, activation='softmax'))
 
     METRICS = [
           'acc',
